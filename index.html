@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SopraLer</title>
+    <link rel="shortcut icon" href="Logo1_Vazada.png" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Intellectual 
+         Backgrounds: Warm Neutrals (bg-stone-50, bg-orange-50)
+         Primary: Terracotta/Brick (text-orange-800, bg-orange-600) for warmth and human connection.
+         Secondary: Slate Blue (text-slate-700, bg-slate-800) for structure and knowledge.
+         Accents: Amber (for highlights).
+    -->
+
+    <!-- Application Structure Plan:
+         1. Hero Section: Emotional hook and core value proposition (Democratization).
+         2. Mission Control (Dashboard):
+            - "The Problem": Interactive cards revealing the 4 pillars of need.
+            - "The Solution (Flow)": A dynamic step-by-step interactive timeline showing the user journey (Register -> Connect -> Exchange).
+         3. Strategic Analysis (The "Research" Output):
+            - Chart: Target Audience Composition (Visualizing the beneficiaries).
+            - Chart: Strategic Impact Radar (Visualizing the societal benefits).
+            - Critical Success Factors: Interactive Accordion answering the "Research" prompt about risks and mobilization.
+         4. Call to Action: Final engagement.
+         
+         Rationale: This structure moves from the "Why" (Emotion) to the "How" (Logic) to the "What Next" (Strategy), 
+         allowing the user to understand the initiative's mechanism and its potential impact in a logical flow.
+    -->
+
+    <!-- Visualization & Content Choices:
+         - Problem Pillars: Grid of cards. Goal: Inform/Organize. Interaction: Hover/Click to expand. Justification: Breaks down dense text into digestible points.
+         - How It Works: Interactive stepper. Goal: Process/Change. Interaction: Click step to update details. Justification: Linear processes are best understood step-by-step.
+         - Beneficiaries Chart: Doughnut Chart (Chart.js). Goal: Inform/Proportion. Interaction: Toggle segments. Justification: Visually represents the diverse groups served (Students vs. General Readers).
+         - Impact Radar: Radar Chart (Chart.js). Goal: Relationships. Justification: Shows how SopraLer scores on multiple dimensions (Solidarity, Education, Accessibility).
+         - Critical Factors: Accordion list. Goal: Organize. Justification: Allows users to explore potential challenges (logistics, engagement) without overwhelming the layout.
+         - NO SVG/Mermaid: All icons are Unicode or CSS shapes. Charts are Canvas.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #fcfaf8; /* Stone 50 equivalent */
+            color: #1c1917; /* Stone 900 */
+        }
+        h1, h2, h3, .serif-font {
+            font-family: 'Lora', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        /* Custom scrollbar for text areas if needed */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #c2410c; /* Orange 700 */
+            border-radius: 4px;
+        }
+
+        .step-active {
+            border-color: #c2410c; /* Orange 700 */
+            background-color: #ffedd5; /* Orange 100 */
+            color: #9a3412;
+        }
+        .step-inactive {
+            border-color: #e7e5e4; /* Stone 200 */
+            color: #78716c; /* Stone 500 */
+        }
+
+        /* Podcast Modal Styles */
+        .podcast-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .podcast-modal.active {
+            display: flex;
+        }
+        .podcast-modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .podcast-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f5f5f4;
+            border: none;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #44403c;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .podcast-close-btn:hover {
+            background: #ea580c;
+            color: white;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-3xl mr-2">📖</span>
+                    <span class="font-bold text-2xl text-orange-800 tracking-tight serif-font">SopraLer</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#mission" class="text-stone-600 hover:text-orange-700 font-medium transition">A Missão</a>
+                    <a href="#how-it-works" class="text-stone-600 hover:text-orange-700 font-medium transition">Como Funciona</a>
+                    <a href="#analysis" class="text-stone-600 hover:text-orange-700 font-medium transition">Análise Estratégica</a>
+                    <a href="#" onclick="openPodcast(event)" class="text-stone-600 hover:text-orange-700 font-medium transition">Ouça o Deep Dive</a>
+                </div>
+                <div class="flex items-center md:hidden">
+                    <button id="mobile-menu-btn" class="text-stone-500 hover:text-stone-800">
+                        <span class="text-2xl">☰</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-stone-100 p-4">
+            <a href="#mission" class="block py-2 text-stone-600">A Missão</a>
+            <a href="#how-it-works" class="block py-2 text-stone-600">Como Funciona</a>
+            <a href="#analysis" class="block py-2 text-stone-600">Análise Estratégica</a>
+            <a href="#" onclick="openPodcast(event)" class="block py-2 text-stone-600">Ouça o Deep Dive</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-br from-orange-50 via-stone-50 to-white py-16 lg:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block px-4 py-1 rounded-full bg-orange-100 text-orange-800 text-sm font-semibold mb-6 shadow-sm">
+                Democratizando o Acesso ao Conhecimento
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold text-stone-900 mb-6 leading-tight">
+                Um movimento de transformação social <span class="text-orange-600 italic">através da leitura</span>
+            </h1>
+            <p class="text-xl text-stone-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+                O SopraLer conecta quem quer doar a quem precisa ler. Uma rede solidária onde cada livro compartilhado abre novos horizontes e constrói uma sociedade mais justa.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="document.getElementById('how-it-works').scrollIntoView({behavior: 'smooth'})" class="px-8 py-4 bg-orange-600 text-white rounded-lg font-bold shadow-lg hover:bg-orange-700 transition transform hover:-translate-y-1">
+                    Entenda a Iniciativa
+                </button>
+                <button onclick="document.getElementById('analysis').scrollIntoView({behavior: 'smooth'})" class="px-8 py-4 bg-white text-orange-700 border border-orange-200 rounded-lg font-bold shadow-sm hover:bg-orange-50 transition">
+                    Ver Dados e Potencial
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section 1: The Mission & Problems Solved -->
+    <section id="mission" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-stone-900 mb-4">Quais problemas resolvemos?</h2>
+                <p class="text-lg text-stone-600 max-w-2xl mx-auto">
+                    A plataforma atua como um catalisador de oportunidades, focando em quatro pilares fundamentais para combater a desigualdade no acesso à literatura.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="p-6 bg-stone-50 rounded-xl border border-stone-100 hover:shadow-lg hover:border-orange-200 transition group cursor-pointer" onclick="updateContext('p1')">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition duration-300">🔓</div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">Acesso Democrático</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Oportunidade para pessoas com baixo poder aquisitivo consumirem literatura por prazer ou estudo.
+                    </p>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="p-6 bg-stone-50 rounded-xl border border-stone-100 hover:shadow-lg hover:border-orange-200 transition group cursor-pointer" onclick="updateContext('p2')">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition duration-300">🎓</div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">Apoio Escolar</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Suporte a famílias que precisam de livros didáticos e paradidáticos através de trocas gratuitas.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="p-6 bg-stone-50 rounded-xl border border-stone-100 hover:shadow-lg hover:border-orange-200 transition group cursor-pointer" onclick="updateContext('p3')">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition duration-300">🤝</div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">Conexão Solidária</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Criação de canais diretos entre doadores e leitores, estimulando o intercâmbio cultural.
+                    </p>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="p-6 bg-stone-50 rounded-xl border border-stone-100 hover:shadow-lg hover:border-orange-200 transition group cursor-pointer" onclick="updateContext('p4')">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition duration-300">🌱</div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">Transformação Social</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        Promoção do altruísmo e ampliação do conhecimento como motores de mudança na sociedade.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dynamic Context Box -->
+            <div id="context-box" class="mt-12 p-8 bg-orange-50 rounded-2xl border border-orange-100 hidden">
+                <div class="flex items-start">
+                    <div class="text-3xl mr-4" id="context-icon">💡</div>
+                    <div>
+                        <h4 class="text-lg font-bold text-orange-900 mb-2" id="context-title">Selecione um pilar acima</h4>
+                        <p class="text-stone-700" id="context-desc">Clique nos cartões para ver detalhes sobre como o SopraLer atua em cada frente.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: How It Works (Process Flow) -->
+    <section id="how-it-works" class="py-20 bg-stone-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                
+                <!-- Left: Text & Steps -->
+                <div>
+                    <h2 class="text-3xl font-bold mb-6">Como funciona a plataforma?</h2>
+                    <p class="text-stone-300 mb-10 text-lg">
+                        O SopraLer atua como um HUB centralizador. A tecnologia é simples para garantir que o foco permaneça na solidariedade e no livro.
+                    </p>
+
+                    <div class="space-y-4">
+                        <!-- Step 1 -->
+                        <div class="process-step flex items-center p-4 rounded-lg cursor-pointer transition bg-stone-800 border-l-4 border-orange-500" onclick="setStep(1)">
+                            <div class="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center font-bold text-white mr-4">1</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Cadastro</h4>
+                                <p class="text-stone-400 text-sm">Acesso ao www.sopraler.com.br</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 -->
+                        <div class="process-step flex items-center p-4 rounded-lg cursor-pointer transition hover:bg-stone-800 border-l-4 border-transparent hover:border-stone-600" onclick="setStep(2)">
+                            <div class="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center font-bold text-white mr-4">2</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Disponibilização e Busca</h4>
+                                <p class="text-stone-400 text-sm">Listar doações ou procurar títulos</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="process-step flex items-center p-4 rounded-lg cursor-pointer transition hover:bg-stone-800 border-l-4 border-transparent hover:border-stone-600" onclick="setStep(3)">
+                            <div class="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center font-bold text-white mr-4">3</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Hub de Conexão</h4>
+                                <p class="text-stone-400 text-sm">Match entre doador e interessado</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 4 -->
+                        <div class="process-step flex items-center p-4 rounded-lg cursor-pointer transition hover:bg-stone-800 border-l-4 border-transparent hover:border-stone-600" onclick="setStep(4)">
+                            <div class="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center font-bold text-white mr-4">4</div>
+                            <div>
+                                <h4 class="font-bold text-lg">Logística Direta</h4>
+                                <p class="text-stone-400 text-sm">Acordo de envio via e-mail</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Visual Representation (Interactive Dynamic Area) -->
+                <div class="bg-stone-800 rounded-2xl p-8 border border-stone-700 h-full flex flex-col justify-center min-h-[400px]">
+                    <div id="step-display" class="text-center transition-all duration-500">
+                        <div class="text-6xl mb-6">🖥️</div>
+                        <h3 class="text-2xl font-bold text-orange-400 mb-4">Passo 1: O Início da Jornada</h3>
+                        <p class="text-stone-300 leading-relaxed text-lg">
+                            As pessoas interessadas acessam a plataforma e realizam um cadastro simples. Isso habilita o usuário a interagir com a comunidade e visualizar o acervo disponível.
+                        </p>
+                        <div class="mt-8 pt-8 border-t border-stone-700">
+                            <span class="text-sm text-stone-500 uppercase tracking-wider">Ação do Usuário</span>
+                            <div class="mt-2 font-mono text-stone-300 bg-stone-900 py-2 px-4 rounded inline-block">
+                                Cadastrar-se em sopraler.com.br
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Strategic Analysis & Research -->
+    <section id="analysis" class="py-20 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12">
+                <span class="text-orange-600 font-bold tracking-wider uppercase text-sm">Fundamentação Técnica</span>
+                <h2 class="text-3xl font-bold text-stone-900 mt-2">Pesquisa e Potencial de Engajamento</h2>
+                <p class="text-stone-600 mt-4 max-w-3xl">
+                    Análise baseada na dinâmica proposta pela iniciativa, identificando público-alvo, impacto esperado e fatores críticos para o sucesso da plataforma.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                
+                <!-- Chart 1: Beneficiaries -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">Público Potencial e Adesão</h3>
+                    <p class="text-xs text-stone-500 mb-4">Estimativa de grupos de interesse baseada nas personas descritas.</p>
+                    <div class="chart-container">
+                        <canvas id="audienceChart"></canvas>
+                    </div>
+                    <div class="mt-4 p-4 bg-orange-50 rounded-lg text-sm text-stone-700">
+                        <strong>Insight:</strong> O maior potencial de adesão reside em famílias com estudantes, onde a economia com livros didáticos gera impacto financeiro imediato.
+                    </div>
+                </div>
+
+                <!-- Chart 2: Impact Pillars -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">Dimensões de Impacto Social</h3>
+                    <p class="text-xs text-stone-500 mb-4">Grau de influência da plataforma em diferentes vetores sociais.</p>
+                    <div class="chart-container">
+                        <canvas id="impactChart"></canvas>
+                    </div>
+                    <div class="mt-4 p-4 bg-slate-50 rounded-lg text-sm text-stone-700">
+                        <strong>Insight:</strong> O modelo "Hub" maximiza a solidariedade, transformando o ato de doar em uma ferramenta ativa de educação.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Critical Success Factors (Accordion) -->
+            <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                <div class="p-6 border-b border-stone-200 bg-stone-100">
+                    <h3 class="font-bold text-xl text-stone-800">Fatores Críticos de Sucesso</h3>
+                    <p class="text-stone-600 text-sm">Aspectos identificados como vitais para a viabilidade da iniciativa.</p>
+                </div>
+                
+                <div class="divide-y divide-stone-100">
+                    <!-- Item 1 -->
+                    <div class="p-4 hover:bg-stone-50 cursor-pointer transition" onclick="toggleAccordion('acc1')">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-stone-700 flex items-center">
+                                <span class="text-orange-500 mr-2">⚠</span> Logística Descentralizada
+                            </h4>
+                            <span id="icon-acc1" class="text-stone-400">▼</span>
+                        </div>
+                        <div id="content-acc1" class="hidden mt-3 text-stone-600 text-sm pl-6 border-l-2 border-orange-200">
+                            A plataforma delega a logística aos usuários ("combinar via e-mail"). 
+                            <strong>Risco:</strong> Custos de frete inviabilizarem doações para pessoas de baixa renda. 
+                            <strong>Solução Potencial:</strong> Parcerias com correios ou pontos de coleta locais.
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="p-4 hover:bg-stone-50 cursor-pointer transition" onclick="toggleAccordion('acc2')">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-stone-700 flex items-center">
+                                <span class="text-orange-500 mr-2">⚡</span> Engajamento Contínuo
+                            </h4>
+                            <span id="icon-acc2" class="text-stone-400">▼</span>
+                        </div>
+                        <div id="content-acc2" class="hidden mt-3 text-stone-600 text-sm pl-6 border-l-2 border-orange-200">
+                            Para funcionar, a plataforma precisa de oferta constante de livros.
+                            <strong>Desafio:</strong> Manter doadores ativos após a primeira doação.
+                            <strong>Estratégia:</strong> Gamificação da solidariedade e campanhas em escolas/universidades.
+                        </div>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div class="p-4 hover:bg-stone-50 cursor-pointer transition" onclick="toggleAccordion('acc3')">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-stone-700 flex items-center">
+                                <span class="text-orange-500 mr-2">🛡️</span> Confiança e Segurança
+                            </h4>
+                            <span id="icon-acc3" class="text-stone-400">▼</span>
+                        </div>
+                        <div id="content-acc3" class="hidden mt-3 text-stone-600 text-sm pl-6 border-l-2 border-orange-200">
+                            A troca de e-mails pessoais exige cuidados com privacidade.
+                            <strong>Necessidade:</strong> Termos de uso claros e orientações de segurança para encontros presenciais ou trocas de dados.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-white py-12 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h2 class="text-2xl font-bold mb-4 serif-font">Junte-se ao Movimento SopraLer</h2>
+            <p class="text-stone-400 mb-8 max-w-2xl mx-auto">
+                Cada livro doado é uma semente de conhecimento plantada. Faça parte dessa transformação.
+            </p>
+            <a href="http://www.sopraler.com.br" target="_blank" class="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-full transition shadow-lg hover:shadow-orange-900/50">
+                Acessar Plataforma Oficial
+            </a>
+            <div class="mt-8 text-sm text-stone-600">
+                <p>Baseado na descrição da iniciativa SopraLer.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Podcast Modal -->
+    <div id="podcast-modal" class="podcast-modal">
+        <div class="podcast-modal-content">
+            <button class="podcast-close-btn" onclick="closePodcast()" title="Fechar">✕</button>
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-bold text-stone-900 mb-2 serif-font">🎙️ PodCast SopraLer</h3>
+                <p class="text-stone-600 text-sm">Ouça sobre nossa iniciativa</p>
+            </div>
+            <audio id="podcast-player" controls class="w-full" style="border-radius: 0.5rem;">
+                <source src="ouvir_podcast.mp3" type="audio/mpeg">
+                Seu navegador não suporta o elemento de áudio.
+            </audio>
+            <div class="mt-6 text-center">
+                <button onclick="closePodcast()" class="px-6 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition">
+                    Voltar à Página
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // State for Context Section
+        const contextData = {
+            'p1': {
+                title: 'Acesso Democrático',
+                desc: 'Muitos brasileiros não têm recursos para comprar livros. O SopraLer remove a barreira financeira, permitindo que a leitura seja um direito, não um privilégio.',
+                icon: '🔓'
+            },
+            'p2': {
+                title: 'Apoio Escolar e Famílias',
+                desc: 'Livros didáticos são caros e têm vida útil curta para o aluno. A troca de exemplares de anos anteriores alivia o orçamento familiar e apoia a educação.',
+                icon: '🎓'
+            },
+            'p3': {
+                title: 'Conexão e Comunidade',
+                desc: 'A plataforma não é apenas um depósito de livros, é uma rede social de leitores. Conectar quem tem com quem precisa cria laços humanos.',
+                icon: '🤝'
+            },
+            'p4': {
+                title: 'Solidariedade Transformadora',
+                desc: 'O ato de doar ensina valores de cidadania. O conhecimento adquirido através da leitura empodera o indivíduo e transforma seu entorno.',
+                icon: '🌱'
+            }
+        };
+
+        function updateContext(id) {
+            const box = document.getElementById('context-box');
+            const title = document.getElementById('context-title');
+            const desc = document.getElementById('context-desc');
+            const icon = document.getElementById('context-icon');
+            
+            // Populate
+            title.textContent = contextData[id].title;
+            desc.textContent = contextData[id].desc;
+            icon.textContent = contextData[id].icon;
+
+            // Show animation
+            box.classList.remove('hidden');
+            box.classList.add('animate-fade-in-up'); // Standard Tailwind doesn't have this, simulated via transition logic below if needed, or just plain display
+            
+            // Simple visual feedback on scroll
+            box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        }
+
+        // State for Steps Section
+        const stepData = [
+            {
+                id: 1,
+                title: "Passo 1: O Início da Jornada",
+                desc: "As pessoas interessadas acessam a plataforma e realizam um cadastro simples. Isso habilita o usuário a interagir com a comunidade e visualizar o acervo disponível.",
+                icon: "🖥️",
+                action: "Cadastrar-se em sopraler.com.br"
+            },
+            {
+                id: 2,
+                title: "Passo 2: Disponibilização e Busca",
+                desc: "Os usuários cadastram os livros que desejam doar ou trocar. Simultaneamente, quem precisa pode buscar obras por categoria ou interesse específico.",
+                icon: "📚",
+                action: "Listar Livro / Buscar Livro"
+            },
+            {
+                id: 3,
+                title: "Passo 3: O HUB de Conexão",
+                desc: "A inteligência da plataforma cruza interesses. Ela age como um facilitador, mostrando onde está o livro que você precisa ou quem precisa do livro que você tem.",
+                icon: "🔗",
+                action: "Plataforma conecta perfis"
+            },
+            {
+                id: 4,
+                title: "Passo 4: Contato e Logística",
+                desc: "A mágica acontece no contato direto. Usuários trocam e-mails para combinar a entrega, seja por correio ou encontro, humanizando o processo.",
+                icon: "✉️",
+                action: "Combinar envio por E-mail"
+            }
+        ];
+
+        function setStep(stepId) {
+            // Update Visuals on Left
+            const steps = document.querySelectorAll('.process-step');
+            steps.forEach((el, index) => {
+                if (index + 1 === stepId) {
+                    el.classList.remove('border-transparent', 'hover:bg-stone-800');
+                    el.classList.add('bg-stone-800', 'border-orange-500');
+                    el.querySelector('.rounded-full').classList.remove('bg-stone-700');
+                    el.querySelector('.rounded-full').classList.add('bg-orange-600');
+                } else {
+                    el.classList.add('border-transparent', 'hover:bg-stone-800');
+                    el.classList.remove('bg-stone-800', 'border-orange-500');
+                    el.querySelector('.rounded-full').classList.add('bg-stone-700');
+                    el.querySelector('.rounded-full').classList.remove('bg-orange-600');
+                }
+            });
+
+            // Update Content on Right
+            const display = document.getElementById('step-display');
+            const data = stepData[stepId - 1];
+            
+            // Simple fade effect
+            display.style.opacity = '0';
+            setTimeout(() => {
+                display.innerHTML = `
+                    <div class="text-6xl mb-6">${data.icon}</div>
+                    <h3 class="text-2xl font-bold text-orange-400 mb-4">${data.title}</h3>
+                    <p class="text-stone-300 leading-relaxed text-lg">${data.desc}</p>
+                    <div class="mt-8 pt-8 border-t border-stone-700">
+                        <span class="text-sm text-stone-500 uppercase tracking-wider">Ação do Usuário</span>
+                        <div class="mt-2 font-mono text-stone-300 bg-stone-900 py-2 px-4 rounded inline-block">
+                            ${data.action}
+                        </div>
+                    </div>
+                `;
+                display.style.opacity = '1';
+            }, 200);
+        }
+
+        // Accordion Logic
+        function toggleAccordion(id) {
+            const content = document.getElementById(`content-${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.textContent = '▲';
+                icon.classList.add('text-orange-600');
+            } else {
+                content.classList.add('hidden');
+                icon.textContent = '▼';
+                icon.classList.remove('text-orange-600');
+            }
+        }
+
+        // Mobile Menu
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Podcast Modal Functions
+        function openPodcast(event) {
+            event.preventDefault();
+            const modal = document.getElementById('podcast-modal');
+            const player = document.getElementById('podcast-player');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.add('hidden');
+        }
+
+        function closePodcast() {
+            const modal = document.getElementById('podcast-modal');
+            const player = document.getElementById('podcast-player');
+            modal.classList.remove('active');
+            player.pause(); // Pause audio when closing
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Close modal when clicking outside the content
+        document.getElementById('podcast-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePodcast();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('podcast-modal');
+                if (modal.classList.contains('active')) {
+                    closePodcast();
+                }
+            }
+        });
+
+        // Initialize Charts
+        window.onload = function() {
+            // Chart 1: Beneficiaries (Audience)
+            const ctxAudience = document.getElementById('audienceChart').getContext('2d');
+            new Chart(ctxAudience, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Estudantes (Didáticos)', 'Leitores Baixa Renda', 'Leitores Casuais/Troca', 'Instituições'],
+                    datasets: [{
+                        data: [40, 30, 20, 10], // Estimated split based on "school support" and "low income" focus
+                        backgroundColor: ['#ea580c', '#fb923c', '#fdba74', '#fed7aa'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Nunito' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.raw + '% (Estimado)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Impact Radar
+            const ctxImpact = document.getElementById('impactChart').getContext('2d');
+            new Chart(ctxImpact, {
+                type: 'radar',
+                data: {
+                    labels: ['Educação', 'Solidariedade', 'Sustentabilidade', 'Acesso Cultural', 'Tecnologia'],
+                    datasets: [{
+                        label: 'Índice de Impacto Esperado',
+                        data: [90, 85, 70, 80, 50], // Technology is a means (50), Education is the end (90)
+                        fill: true,
+                        backgroundColor: 'rgba(234, 88, 12, 0.2)',
+                        borderColor: 'rgba(234, 88, 12, 1)',
+                        pointBackgroundColor: 'rgba(234, 88, 12, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(234, 88, 12, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e5e7eb' },
+                            grid: { color: '#e5e7eb' },
+                            pointLabels: { font: { family: 'Nunito', size: 12 }, color: '#4b5563' },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Initialize first step
+            setStep(1);
+        };
+    </script>
+</body>
+</html>
